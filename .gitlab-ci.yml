@@ -1,0 +1,8 @@
+stages:
+  - trigger
+
+trigger-s3:
+  stage: trigger
+  trigger:
+    include: s3/gitlab-ci.yml
+    strategy: depend
