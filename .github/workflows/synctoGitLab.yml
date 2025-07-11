@@ -30,6 +30,7 @@ jobs:
 
           # Add GitLab as a remote
           git remote add gitlab https://oauth2:${GITLAB_TOKEN}@${GITLAB_URL} || true
+          # FORMAT GITLAB_URL in Variables : gitlab.domain.com/devops/aws-infra-as-code-pulumi.git
 
           # Push to GitLab (force to ensure sync)
           # git push --force gitlab main
