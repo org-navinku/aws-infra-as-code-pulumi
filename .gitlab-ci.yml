@@ -5,6 +5,7 @@ image:
 stages:
   - validate
   - install
+  - test
   - preview
   - refresh
   - dev
@@ -80,6 +81,23 @@ install:s3:
     - validate:s3
   only:
     - branches
+
+unit_tests:s3:
+  <<: *pulumi_job_template
+  stage: test
+  variables:
+    PROJECT_DIR: "s3"
+  script:
+    - source .venv/bin/activate
+    - pip install pytest
+    - pytest tests/ --junitxml=report.xml
+  artifacts:
+    reports:
+      junit: report.xml
+    paths:
+      - s3/report.xml
+  dependencies:
+    - install:s3
 
 preview:s3:
   <<: *pulumi_job_template
