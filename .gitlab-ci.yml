@@ -88,9 +88,9 @@ unit_tests:s3:
   variables:
     PROJECT_DIR: "s3"
   script:
+    - cd ${PROJECT_DIR}
     - source .venv/bin/activate
     - pip install pytest
-    - cd ${PROJECT_DIR}
     - pytest tests/ --junitxml=report.xml
   artifacts:
     reports:
