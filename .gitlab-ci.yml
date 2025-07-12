@@ -87,6 +87,7 @@ unit_tests:s3:
   stage: test
   variables:
     PROJECT_DIR: "s3"
+    GIT_STRATEGY: clone
   script:
     - cd ${PROJECT_DIR}
     - source .venv/bin/activate
