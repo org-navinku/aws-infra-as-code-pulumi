@@ -32,28 +32,48 @@ before_script:
 validate:
   stage: validate
   script:
-    - test -f requirements.txt || (echo "Missing requirements.txt" && exit 1)
-    - test -f Pulumi.yaml || (echo "Missing Pulumi.yaml" && exit 1)
-    - test -f __main__.py || (echo "Missing __main__.py" && exit 1)
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "push"
+    - echo "Validating project structure"
+    - |
+      if [ ! -f "requirements.txt" ]; then
+        echo "ERROR: requirements.txt not found!"
+        echo "Please create requirements.txt with Pulumi dependencies"
+        exit 1
+      fi
+    - |
+      if [ ! -f "Pulumi.yaml" ]; then
+        echo "ERROR: Pulumi.yaml not found!"
+        echo "Please run 'pulumi new' to initialize your project"
+        exit 1
+      fi
+    - |
+      if [ ! -f "__main__.py" ]; then
+        echo "ERROR: __main__.py not found!"
+        echo "Please create your main Pulumi program file"
+        exit 1
+      fi
+    - echo "Project structure validation passed"
+  only:
+    - branches
 
 install:
   stage: install
   script:
     - python3 -m venv .venv
     - source .venv/bin/activate
+    - pip install --upgrade pip
     - pip install -r requirements.txt
+    - python -c "import pulumi; print('Pulumi version:', pulumi._version)"
   artifacts:
     paths:
       - .venv/
       - .pulumi/
-    expire_in: 1 week
-  needs:
-    - job: validate
-      optional: true
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "push"
+      - __pycache__/
+    expire_in: 1h
+  only:
+    - branches
+  when: always
+  dependencies:
+    - validate
 
 preview:
   stage: preview
