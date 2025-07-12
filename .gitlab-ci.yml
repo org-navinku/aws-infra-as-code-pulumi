@@ -84,8 +84,7 @@ install:s3:
       - ${PROJECT_DIR}/.venv/
       - ${PROJECT_DIR}/.pulumi/
     expire_in: 1h
-  dependencies:
-    - validate:s3
+  needs: ["validate:${PROJECT_DIR}"]
   only:
     - branches
   when: manual
@@ -116,8 +115,7 @@ unit_tests:s3:
     paths:
       - ${PROJECT_DIR}/report.xml
     when: always
-  dependencies:
-    - install:s3
+  needs: ["install:${PROJECT_DIR}"]
   only:
     - branches
   allow_failure: true
@@ -129,10 +127,9 @@ preview:s3:
     PROJECT_DIR: "s3"
   script:
     - *python_setup
-    - pulumi stack select ${STACK_NAME}-s3 || pulumi stack init ${STACK_NAME}-s3
-    - pulumi preview --stack ${STACK_NAME}-s3 --diff --non-interactive --color always
-  dependencies:
-    - install:s3
+    - pulumi stack select ${STACK_NAME}-${PROJECT_DIR} || pulumi stack init ${STACK_NAME}-${PROJECT_DIR}
+    - pulumi preview --stack ${STACK_NAME}-${PROJECT_DIR} --diff --non-interactive --color always
+  needs: ["install:${PROJECT_DIR}"]
   only:
     - branches
   when: manual
@@ -144,10 +141,9 @@ refresh:s3:
     PROJECT_DIR: "s3"
   script:
     - *python_setup
-    - pulumi stack select ${STACK_NAME}-s3 || pulumi stack init ${STACK_NAME}-s3
-    - pulumi refresh --yes --non-interactive --color always --stack ${STACK_NAME}-s3
-  dependencies:
-    - preview:s3
+    - pulumi stack select ${STACK_NAME}-${PROJECT_DIR} || pulumi stack init ${STACK_NAME}-${PROJECT_DIR}
+    - pulumi refresh --yes --non-interactive --color always --stack ${STACK_NAME}-${PROJECT_DIR}
+  needs: ["preview:${PROJECT_DIR}"]
   when: manual
   only:
     - main
@@ -160,10 +156,9 @@ deploy:s3:
     GIT_STRATEGY: clone
   script:
     - *python_setup
-    - pulumi stack select ${STACK_NAME}-s3 || pulumi stack init ${STACK_NAME}-s3
-    - pulumi up --yes --non-interactive --color always --skip-preview --stack ${STACK_NAME}-s3
-  dependencies:
-    - preview:s3
+    - pulumi stack select ${STACK_NAME}-${PROJECT_DIR} || pulumi stack init ${STACK_NAME}-${PROJECT_DIR}
+    - pulumi up --yes --non-interactive --color always --skip-preview --stack ${STACK_NAME}-${PROJECT_DIR}
+  needs: ["preview:${PROJECT_DIR}"]
   when: manual
   only:
     - main
@@ -175,10 +170,9 @@ destroy:s3:
     PROJECT_DIR: "s3"
   script:
     - *python_setup
-    - pulumi stack select ${STACK_NAME}-s3 || pulumi stack init ${STACK_NAME}-s3
-    - pulumi destroy --yes --non-interactive --color always --stack ${STACK_NAME}-s3
-  dependencies:
-    - deploy:s3
+    - pulumi stack select ${STACK_NAME}-${PROJECT_DIR} || pulumi stack init ${STACK_NAME}-${PROJECT_DIR}
+    - pulumi destroy --yes --non-interactive --color always --stack ${STACK_NAME}-${PROJECT_DIR}
+  needs: ["deploy:${PROJECT_DIR}"]
   when: manual
   only:
     - main
@@ -217,18 +211,17 @@ install:ec2:
   variables:
     PROJECT_DIR: "ec2"
   script:
-    - python3 -m venv .venv
-    - source .venv/bin/activate
+    - python3 -m venv ${PROJECT_DIR}.venv
+    - source ${PROJECT_DIR}.venv/bin/activate
     - pip install --upgrade pip
     - pip install -r requirements.txt
     - python -c "import pulumi; print('Pulumi version:', pulumi._version)"
   artifacts:
     paths:
-      - ec2/.venv/
-      - ec2/.pulumi/
+      - ${PROJECT_DIR}.venv/
+      - ${PROJECT_DIR}/.pulumi/
     expire_in: 1h
-  dependencies:
-    - validate:ec2
+  needs: ["validate:${PROJECT_DIR}"]
   only:
     - branches
   when: manual
@@ -240,26 +233,25 @@ unit_tests:ec2:
     PROJECT_DIR: "ec2"
     GIT_STRATEGY: clone
   script:
-    - source .venv/bin/activate
+    - source ${PROJECT_DIR}.venv/bin/activate
     - pip install pytest
     # Create tests directory if it doesn't exist
-    - mkdir -p tests
+    - mkdir -p ${PROJECT_DIR}/tests
     # Check if there are any test files
     - |
-      if [ ! -f "tests/test_*.py" ] && [ -z "$(find tests -name 'test_*.py' -type f)" ]; then
-        echo "No test files found in tests/ directory"
+      if [ ! -f "${PROJECT_DIR}/tests/test_*.py" ] && [ -z "$(find ${PROJECT_DIR}/tests -name 'test_*.py' -type f)" ]; then
+        echo "No test files found in ${PROJECT_DIR}/tests/ directory"
         echo "Creating a dummy test to prevent failure"
-        echo "def test_dummy(): assert True" > tests/test_dummy.py
+        echo "def test_dummy(): assert True" > ${PROJECT_DIR}/tests/test_dummy.py
       fi
     # Run tests with more verbose output and continue on failure
-    - pytest tests/ --junitxml=report.xml -v --tb=short || echo "Tests failed but continuing for artifact collection"
+    - pytest ${PROJECT_DIR}/tests/ --junitxml=report.xml -v --tb=short || echo "Tests failed but continuing for artifact collection"
   artifacts:
     reports:
-      junit: ec2/report.xml
+      junit: ${PROJECT_DIR}/report.xml
     paths:
-      - ec2/report.xml
-  dependencies:
-    - install:ec2
+      - ${PROJECT_DIR}/report.xml
+  needs: ["install:${PROJECT_DIR}"]
   only:
     - branches
   allow_failure: true
@@ -273,8 +265,7 @@ preview:ec2:
     - *python_setup
     - pulumi stack select ${STACK_NAME}-${PROJECT_DIR} || pulumi stack init ${STACK_NAME}-${PROJECT_DIR}
     - pulumi preview --stack ${STACK_NAME}-${PROJECT_DIR} --diff --non-interactive --color always
-  dependencies:
-    - install:ec2
+  needs: ["install:${PROJECT_DIR}"]
   only:
     - branches
   when: manual
@@ -288,8 +279,7 @@ refresh:ec2:
     - *python_setup
     - pulumi stack select ${STACK_NAME}-${PROJECT_DIR} || pulumi stack init ${STACK_NAME}-${PROJECT_DIR}
     - pulumi refresh --yes --non-interactive --color always --stack ${STACK_NAME}-${PROJECT_DIR}
-  dependencies:
-    - preview:ec2
+  needs: ["preview:${PROJECT_DIR}"]
   when: manual
   only:
     - main
@@ -304,8 +294,7 @@ deploy:ec2:
     - *python_setup
     - pulumi stack select ${STACK_NAME}-${PROJECT_DIR} || pulumi stack init ${STACK_NAME}-${PROJECT_DIR}
     - pulumi up --yes --non-interactive --color always --skip-preview --stack ${STACK_NAME}-${PROJECT_DIR}
-  dependencies:
-    - preview:ec2
+  needs: ["preview:${PROJECT_DIR}"]
   when: manual
   only:
     - main
@@ -319,8 +308,7 @@ destroy:ec2:
     - *python_setup
     - pulumi stack select ${STACK_NAME}-${PROJECT_DIR} || pulumi stack init ${STACK_NAME}-${PROJECT_DIR}
     - pulumi destroy --yes --non-interactive --color always --stack ${STACK_NAME}-${PROJECT_DIR}
-  dependencies:
-    - deploy:ec2
+  needs: ["deploy:${PROJECT_DIR}"]
   when: manual
   only:
     - main
