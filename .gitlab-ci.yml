@@ -90,6 +90,7 @@ unit_tests:s3:
   script:
     - source .venv/bin/activate
     - pip install pytest
+    - cd ${PROJECT_DIR}
     - pytest tests/ --junitxml=report.xml
   artifacts:
     reports:
