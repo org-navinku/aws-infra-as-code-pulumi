@@ -59,14 +59,15 @@ preview:
   stage: preview
   script:
     - source .venv/bin/activate
-    - pulumi preview --stack ${STACK_NAME}
+    - pulumi stack select ${STACK_NAME} || pulumi stack init ${STACK_NAME}
+    - pulumi preview --stack ${STACK_NAME} --diff --non-interactive --color always
   needs:
     - install
   only:
     - branches
   when: on_success
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "push"
+  dependencies:
+    - install
 
 refresh:
   stage: refresh
