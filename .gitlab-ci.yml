@@ -1,8 +1,120 @@
-stages:
-  - trigger
+image:
+  name: pulumi/pulumi-python:latest
+  entrypoint: [""]
 
-trigger-s3:
-  stage: trigger
-  trigger:
-    include: s3/.gitlab-ci.yml
-    strategy: depend
+stages:
+  - validate
+  - install
+  - preview
+  - refresh
+  - dev
+
+variables:
+  GIT_DEPTH: "1"
+  GIT_STRATEGY: clone
+  AWS_REGION: "us-east-2"
+  PULUMI_BACKEND_URL: "s3://${PULUMI_S3_BUCKET}"
+  STACK_NAME: "dev"
+
+.pulumi_job_template: &pulumi_job_template
+  before_script:
+    - echo "Setting up environment variables for ${PROJECT_DIR}"
+    - export AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+    - export AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+    - export AWS_DEFAULT_REGION=${AWS_REGION}
+    - export PULUMI_CONFIG_PASSPHRASE=$PULUMI_CONFIG_PASSPHRASE
+    - export PULUMI_BACKEND_URL=$PULUMI_BACKEND_URL
+    - cd ${PROJECT_DIR}
+    - pulumi login ${PULUMI_BACKEND_URL}
+
+# S3 Project Jobs
+validate:s3:
+  <<: *pulumi_job_template
+  stage: validate
+  variables:
+    PROJECT_DIR: "s3"
+  script:
+    - echo "Validating project structure in ${PROJECT_DIR}"
+    - |
+      if [ ! -f "requirements.txt" ]; then
+        echo "ERROR: requirements.txt not found in ${PROJECT_DIR}!"
+        exit 1
+      fi
+    - |
+      if [ ! -f "Pulumi.yaml" ]; then
+        echo "ERROR: Pulumi.yaml not found in ${PROJECT_DIR}!"
+        exit 1
+      fi
+    - |
+      if [ ! -f "__main__.py" ]; then
+        echo "ERROR: __main__.py not found in ${PROJECT_DIR}!"
+        exit 1
+      fi
+    - echo "Project structure validation passed for ${PROJECT_DIR}"
+  only:
+    - branches
+
+install:s3:
+  <<: *pulumi_job_template
+  stage: install
+  variables:
+    PROJECT_DIR: "s3"
+  script:
+    - python3 -m venv .venv
+    - source .venv/bin/activate
+    - pip install --upgrade pip
+    - pip install -r requirements.txt
+    - python -c "import pulumi; print('Pulumi version:', pulumi._version)"
+  artifacts:
+    paths:
+      - s3/.venv/
+      - s3/.pulumi/
+    expire_in: 1h
+  dependencies:
+    - validate:s3
+  only:
+    - branches
+
+preview:s3:
+  <<: *pulumi_job_template
+  stage: preview
+  variables:
+    PROJECT_DIR: "s3"
+  script:
+    - source .venv/bin/activate
+    - pulumi stack select ${STACK_NAME}-s3 || pulumi stack init ${STACK_NAME}-s3
+    - pulumi preview --stack ${STACK_NAME}-s3 --diff --non-interactive --color always
+  dependencies:
+    - install:s3
+  only:
+    - branches
+
+deploy:s3:
+  <<: *pulumi_job_template
+  stage: dev
+  variables:
+    PROJECT_DIR: "s3"
+  script:
+    - source .venv/bin/activate
+    - pulumi stack select ${STACK_NAME}-s3 || pulumi stack init ${STACK_NAME}-s3
+    - pulumi up --yes --non-interactive --color always --skip-preview --stack ${STACK_NAME}-s3
+  dependencies:
+    - preview:s3
+  when: manual
+  only:
+    - main
+
+destroy:s3:
+  <<: *pulumi_job_template
+  stage: dev
+  variables:
+    PROJECT_DIR: "s3"
+  script:
+    - source .venv/bin/activate
+    - pulumi stack select ${STACK_NAME}-s3 || pulumi stack init ${STACK_NAME}-s3
+    - pulumi destroy --yes --non-interactive --color always --stack ${STACK_NAME}-s3
+  dependencies:
+    - deploy:s3
+  when: manual
+  only:
+    - main
