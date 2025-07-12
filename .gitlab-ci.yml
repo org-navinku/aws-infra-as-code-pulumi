@@ -74,15 +74,15 @@ install:s3:
   variables:
     PROJECT_DIR: "s3"
   script:
-    - python3 -m venv .venv
-    - source .venv/bin/activate
+    - python3 -m venv ${PROJECT_DIR}/.venv
+    - source ${PROJECT_DIR}/.venv/bin/activate
     - pip install --upgrade pip
     - pip install -r requirements.txt
     - python -c "import pulumi; print('Pulumi version:', pulumi._version)"
   artifacts:
     paths:
-      - s3/.venv/
-      - s3/.pulumi/
+      - ${PROJECT_DIR}/.venv/
+      - ${PROJECT_DIR}/.pulumi/
     expire_in: 1h
   dependencies:
     - validate:s3
@@ -97,24 +97,24 @@ unit_tests:s3:
     PROJECT_DIR: "s3"
     GIT_STRATEGY: clone
   script:
-    - source .venv/bin/activate
+    - source ${PROJECT_DIR}/.venv/bin/activate
     - pip install pytest
     # Create tests directory if it doesn't exist
-    - mkdir -p tests
+    - mkdir -p ${PROJECT_DIR}/tests
     # Check if there are any test files
     - |
-      if [ ! -f "tests/test_*.py" ] && [ -z "$(find tests -name 'test_*.py' -type f)" ]; then
-        echo "No test files found in tests/ directory"
+      if [ ! -f "${PROJECT_DIR}/tests/test_*.py" ] && [ -z "$(find ${PROJECT_DIR}/tests -name 'test_*.py' -type f)" ]; then
+        echo "No test files found in ${PROJECT_DIR}/tests/ directory"
         echo "Creating a dummy test to prevent failure"
-        echo "def test_dummy(): assert True" > tests/test_dummy.py
+        echo "def test_dummy(): assert True" > ${PROJECT_DIR}/tests/test_dummy.py
       fi
     # Run tests with more verbose output and continue on failure
-    - pytest tests/ --junitxml=report.xml -v --tb=short || echo "Tests failed but continuing for artifact collection"
+    - pytest ${PROJECT_DIR}/tests/ --junitxml=report.xml -v --tb=short || echo "Tests failed but continuing for artifact collection"
   artifacts:
     reports:
-      junit: s3/report.xml
+      junit: ${PROJECT_DIR}/report.xml
     paths:
-      - s3/report.xml
+      - ${PROJECT_DIR}/report.xml
     when: always
   dependencies:
     - install:s3
