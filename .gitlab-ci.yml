@@ -10,8 +10,8 @@ stages:
   - dev
 
 variables:
-  GIT_DEPTH: "1"
-  GIT_STRATEGY: clone
+  GIT_DEPTH: "0"
+  GIT_STRATEGY: fetch
   AWS_REGION: "us-east-2"
   PULUMI_BACKEND_URL: "s3://${PULUMI_S3_BUCKET}"
   STACK_NAME: "dev"
@@ -115,6 +115,7 @@ deploy:s3:
   stage: dev
   variables:
     PROJECT_DIR: "s3"
+    GIT_STRATEGY: clone
   script:
     - *python_setup
     - pulumi stack select ${STACK_NAME}-s3 || pulumi stack init ${STACK_NAME}-s3
