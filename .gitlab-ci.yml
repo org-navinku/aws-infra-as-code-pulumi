@@ -89,6 +89,21 @@ preview:s3:
   only:
     - branches
 
+refresh:s3:
+  <<: *pulumi_job_template
+  stage: refresh
+  variables:
+    PROJECT_DIR: "s3"
+  script:
+    - source .venv/bin/activate
+    - pulumi stack select ${STACK_NAME}-s3 || pulumi stack init ${STACK_NAME}-s3
+    - pulumi refresh --yes --non-interactive --color always --stack ${STACK_NAME}-s3
+  dependencies:
+    - preview:s3
+  when: manual
+  only:
+    - main
+
 deploy:s3:
   <<: *pulumi_job_template
   stage: dev
