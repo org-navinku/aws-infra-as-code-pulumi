@@ -84,7 +84,8 @@ install:s3:
       - ${PROJECT_DIR}/.venv/
       - ${PROJECT_DIR}/.pulumi/
     expire_in: 1h
-  needs: ["validate:${PROJECT_DIR}"]
+  dependencies:
+    - validate:s3
   only:
     - branches
   when: manual
@@ -115,7 +116,9 @@ unit_tests:s3:
     paths:
       - ${PROJECT_DIR}/report.xml
     when: always
-  needs: ["install:${PROJECT_DIR}"]
+  needs:
+  - job: install:s3
+    artifacts: true
   only:
     - branches
   allow_failure: true
@@ -129,7 +132,8 @@ preview:s3:
     - *python_setup
     - pulumi stack select ${STACK_NAME}-${PROJECT_DIR} || pulumi stack init ${STACK_NAME}-${PROJECT_DIR}
     - pulumi preview --stack ${STACK_NAME}-${PROJECT_DIR} --diff --non-interactive --color always
-  needs: ["install:${PROJECT_DIR}"]
+  dependencies:
+    - install:s3
   only:
     - branches
   when: manual
@@ -143,7 +147,8 @@ refresh:s3:
     - *python_setup
     - pulumi stack select ${STACK_NAME}-${PROJECT_DIR} || pulumi stack init ${STACK_NAME}-${PROJECT_DIR}
     - pulumi refresh --yes --non-interactive --color always --stack ${STACK_NAME}-${PROJECT_DIR}
-  needs: ["preview:${PROJECT_DIR}"]
+  dependencies:
+    - preview:s3
   when: manual
   only:
     - main
@@ -158,7 +163,8 @@ deploy:s3:
     - *python_setup
     - pulumi stack select ${STACK_NAME}-${PROJECT_DIR} || pulumi stack init ${STACK_NAME}-${PROJECT_DIR}
     - pulumi up --yes --non-interactive --color always --skip-preview --stack ${STACK_NAME}-${PROJECT_DIR}
-  needs: ["preview:${PROJECT_DIR}"]
+  dependencies:
+    - preview:s3
   when: manual
   only:
     - main
@@ -172,7 +178,8 @@ destroy:s3:
     - *python_setup
     - pulumi stack select ${STACK_NAME}-${PROJECT_DIR} || pulumi stack init ${STACK_NAME}-${PROJECT_DIR}
     - pulumi destroy --yes --non-interactive --color always --stack ${STACK_NAME}-${PROJECT_DIR}
-  needs: ["deploy:${PROJECT_DIR}"]
+  dependencies:
+    - deploy:s3
   when: manual
   only:
     - main
@@ -221,7 +228,8 @@ install:ec2:
       - ${PROJECT_DIR}.venv/
       - ${PROJECT_DIR}/.pulumi/
     expire_in: 1h
-  needs: ["validate:${PROJECT_DIR}"]
+  dependencies:
+    - validate:ec2
   only:
     - branches
   when: manual
@@ -250,8 +258,9 @@ unit_tests:ec2:
     reports:
       junit: ${PROJECT_DIR}/report.xml
     paths:
-      - ${PROJECT_DIR}/report.xml
-  needs: ["install:${PROJECT_DIR}"]
+      - ${PROJECT_DIR}//report.xml
+  dependencies:
+    - install:ec2
   only:
     - branches
   allow_failure: true
@@ -265,7 +274,8 @@ preview:ec2:
     - *python_setup
     - pulumi stack select ${STACK_NAME}-${PROJECT_DIR} || pulumi stack init ${STACK_NAME}-${PROJECT_DIR}
     - pulumi preview --stack ${STACK_NAME}-${PROJECT_DIR} --diff --non-interactive --color always
-  needs: ["install:${PROJECT_DIR}"]
+  dependencies:
+    - install:ec2
   only:
     - branches
   when: manual
@@ -279,7 +289,8 @@ refresh:ec2:
     - *python_setup
     - pulumi stack select ${STACK_NAME}-${PROJECT_DIR} || pulumi stack init ${STACK_NAME}-${PROJECT_DIR}
     - pulumi refresh --yes --non-interactive --color always --stack ${STACK_NAME}-${PROJECT_DIR}
-  needs: ["preview:${PROJECT_DIR}"]
+  dependencies:
+    - preview:ec2
   when: manual
   only:
     - main
@@ -294,7 +305,8 @@ deploy:ec2:
     - *python_setup
     - pulumi stack select ${STACK_NAME}-${PROJECT_DIR} || pulumi stack init ${STACK_NAME}-${PROJECT_DIR}
     - pulumi up --yes --non-interactive --color always --skip-preview --stack ${STACK_NAME}-${PROJECT_DIR}
-  needs: ["preview:${PROJECT_DIR}"]
+  dependencies:
+    - preview:ec2
   when: manual
   only:
     - main
@@ -308,7 +320,8 @@ destroy:ec2:
     - *python_setup
     - pulumi stack select ${STACK_NAME}-${PROJECT_DIR} || pulumi stack init ${STACK_NAME}-${PROJECT_DIR}
     - pulumi destroy --yes --non-interactive --color always --stack ${STACK_NAME}-${PROJECT_DIR}
-  needs: ["deploy:${PROJECT_DIR}"]
+  dependencies:
+    - deploy:ec2
   when: manual
   only:
     - main
