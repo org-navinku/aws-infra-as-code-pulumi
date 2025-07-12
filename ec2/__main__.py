@@ -9,6 +9,7 @@ ami = ec2.get_ami(
         {"name": "virtualization-type", "values": ["hvm"]},
     ],
 )
+server_name = ["appsedr", "sekmdc","dsfjndfff" ]
 
 default_vpc = ec2.get_vpc(default=True)
 
@@ -22,14 +23,17 @@ group = ec2.SecurityGroup(
     ],
 )
 
-server = ec2.Instance(
-    "web-server",
-    instance_type="t2.micro",
-    ami=ami.id,
-    vpc_security_group_ids=[group.id],
-)
 
-# Export public IP and AMI ID for reference
-pulumi.export("public_ip", server.public_ip)
-pulumi.export("ami_id", ami.id)
-pulumi.export("ami_name", ami.name)
+servers = {}
+for name in server_names:
+    servers[name] = ec2.Instance(
+        f"{name}-server",
+        instance_type="t2.micro",
+        ami=ami.id,
+        vpc_security_group_ids=[group.id],
+        tags={"Name": name}
+    )
+
+pulumi.export(f"{name}_public_dns", servers[name].public_dns)
+pulumi.export(f"{name}_public_ip", servers[name].public_ip)
+pulumi.export(f"{name}_ami_id", ami.id)
