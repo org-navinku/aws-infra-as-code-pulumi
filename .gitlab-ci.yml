@@ -27,6 +27,12 @@ variables:
     - cd ${PROJECT_DIR}
     - pulumi login ${PULUMI_BACKEND_URL}
 
+.python_setup: &python_setup
+  - python3 -m venv .venv
+  - source .venv/bin/activate
+  - pip install --upgrade pip
+  - pip install -r requirements.txt
+
 # S3 Project Jobs
 validate:s3:
   <<: *pulumi_job_template
@@ -81,7 +87,7 @@ preview:s3:
   variables:
     PROJECT_DIR: "s3"
   script:
-    - source .venv/bin/activate
+    - *python_setup
     - pulumi stack select ${STACK_NAME}-s3 || pulumi stack init ${STACK_NAME}-s3
     - pulumi preview --stack ${STACK_NAME}-s3 --diff --non-interactive --color always
   dependencies:
@@ -95,7 +101,7 @@ refresh:s3:
   variables:
     PROJECT_DIR: "s3"
   script:
-    - source .venv/bin/activate
+    - *python_setup
     - pulumi stack select ${STACK_NAME}-s3 || pulumi stack init ${STACK_NAME}-s3
     - pulumi refresh --yes --non-interactive --color always --stack ${STACK_NAME}-s3
   dependencies:
@@ -110,7 +116,7 @@ deploy:s3:
   variables:
     PROJECT_DIR: "s3"
   script:
-    - source .venv/bin/activate
+    - *python_setup
     - pulumi stack select ${STACK_NAME}-s3 || pulumi stack init ${STACK_NAME}-s3
     - pulumi up --yes --non-interactive --color always --skip-preview --stack ${STACK_NAME}-s3
   dependencies:
@@ -125,7 +131,7 @@ destroy:s3:
   variables:
     PROJECT_DIR: "s3"
   script:
-    - source .venv/bin/activate
+    - *python_setup
     - pulumi stack select ${STACK_NAME}-s3 || pulumi stack init ${STACK_NAME}-s3
     - pulumi destroy --yes --non-interactive --color always --stack ${STACK_NAME}-s3
   dependencies:
