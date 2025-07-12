@@ -206,6 +206,7 @@ validate:ec2:
     - echo "Project structure validation passed for ${PROJECT_DIR}"
   only:
     - branches
+  when: manual
 
 install:ec2:
   <<: *pulumi_job_template
@@ -220,13 +221,14 @@ install:ec2:
     - python -c "import pulumi; print('Pulumi version:', pulumi._version)"
   artifacts:
     paths:
-      - ${PROJECT_DIR}/.venv/
-      - ${PROJECT_DIR}/.pulumi/
+      - ec2/.venv/
+      - ec2/.pulumi/
     expire_in: 1h
   dependencies:
-    - validate:${PROJECT_DIR}
+    - validate:ec2
   only:
     - branches
+  when: manual
 
 unit_tests:ec2:
   <<: *pulumi_job_template
@@ -250,12 +252,11 @@ unit_tests:ec2:
     - pytest tests/ --junitxml=report.xml -v --tb=short || echo "Tests failed but continuing for artifact collection"
   artifacts:
     reports:
-      junit: ${PROJECT_DIR}/report.xml
+      junit: ec2/report.xml
     paths:
-      - ${PROJECT_DIR}/report.xml
-    when: always
+      - ec2/report.xml
   dependencies:
-    - install:${PROJECT_DIR}
+    - install:ec2
   only:
     - branches
   allow_failure: true
@@ -270,9 +271,10 @@ preview:ec2:
     - pulumi stack select ${STACK_NAME}-${PROJECT_DIR} || pulumi stack init ${STACK_NAME}-${PROJECT_DIR}
     - pulumi preview --stack ${STACK_NAME}-${PROJECT_DIR} --diff --non-interactive --color always
   dependencies:
-    - install:${PROJECT_DIR}
+    - install:ec2
   only:
     - branches
+  when: manual
 
 refresh:ec2:
   <<: *pulumi_job_template
