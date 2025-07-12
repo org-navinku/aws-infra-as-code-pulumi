@@ -60,7 +60,11 @@ preview:
   script:
     - source .venv/bin/activate
     - pulumi preview --stack ${STACK_NAME}
-  needs: ["install"]
+  needs:
+    - install
+  only:
+    - branches
+  when: on_success
   rules:
     - if: $CI_PIPELINE_SOURCE == "push"
 
@@ -68,9 +72,12 @@ refresh:
   stage: refresh
   script:
     - source .venv/bin/activate
-    - pulumi refresh --stack ${STACK_NAME}
-  needs: ["install"]
+    - pulumi refresh --yes --non-interactive --color always --skip-preview --stack ${STACK_NAME} 
+  needs:
+    - install
   when: manual
+  only:
+    - branches
   rules:
     - if: $CI_PIPELINE_SOURCE == "push"
 
@@ -78,17 +85,19 @@ deploy-to-dev:
   stage: dev
   script:
     - source .venv/bin/activate
-    - pulumi up --stack ${STACK_NAME}
-  needs: ["preview"]
+    - pulumi up --yes --non-interactive --color always --skip-preview --stack ${STACK_NAME}
+  needs:
+    - job: preview
+      optional: true
   rules:
-    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_BRANCH == "main" && $CI_PIPELINE_SOURCE == "push"
   when: manual
 
 destroy-dev:
   stage: dev
   script:
     - source .venv/bin/activate
-    - pulumi destroy --stack ${STACK_NAME}
+    - pulumi destroy --yes --non-interactive --color always --stack ${STACK_NAME}
   rules:
-    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_BRANCH == "main" && $CI_PIPELINE_SOURCE == "push"
   when: manual
