@@ -286,7 +286,7 @@ refresh:ec2:
     - pulumi stack select ${STACK_NAME}-${PROJECT_DIR} || pulumi stack init ${STACK_NAME}-${PROJECT_DIR}
     - pulumi refresh --yes --non-interactive --color always --stack ${STACK_NAME}-${PROJECT_DIR}
   dependencies:
-    - preview:${PROJECT_DIR}
+    - preview:ec2
   when: manual
   only:
     - main
@@ -302,7 +302,7 @@ deploy:ec2:
     - pulumi stack select ${STACK_NAME}-${PROJECT_DIR} || pulumi stack init ${STACK_NAME}-${PROJECT_DIR}
     - pulumi up --yes --non-interactive --color always --skip-preview --stack ${STACK_NAME}-${PROJECT_DIR}
   dependencies:
-    - preview:${PROJECT_DIR}
+    - preview:ec2
   when: manual
   only:
     - main
@@ -317,7 +317,7 @@ destroy:ec2:
     - pulumi stack select ${STACK_NAME}-${PROJECT_DIR} || pulumi stack init ${STACK_NAME}-${PROJECT_DIR}
     - pulumi destroy --yes --non-interactive --color always --stack ${STACK_NAME}-${PROJECT_DIR}
   dependencies:
-    - deploy:${PROJECT_DIR}
+    - deploy:ec2
   when: manual
   only:
     - main
