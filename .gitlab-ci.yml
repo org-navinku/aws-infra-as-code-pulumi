@@ -86,6 +86,7 @@ install:s3:
     paths:
       - ${PROJECT_DIR}/.venv/
       - ${PROJECT_DIR}/.pulumi/
+      - ${PROJECT_DIR}/requirements.txt
     expire_in: 1h
   needs:
     - validate:s3
