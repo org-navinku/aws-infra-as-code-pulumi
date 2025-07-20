@@ -75,7 +75,7 @@ install:s3:
   variables:
     PROJECT_DIR: "s3"
   script:
-    - cd ${PROJECT_DIR}
+    - pwd
     - python3 -m venv .venv
     - source .venv/bin/activate
     - pip install boto3
