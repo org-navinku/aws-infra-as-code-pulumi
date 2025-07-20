@@ -1,0 +1,5 @@
+encryptionsalt: v1:+eMM/4ZISd4=:v1:XVts54iwpCDQZ7vs:rFlEht9nDOuCC/yG4AVgcXD3yBgZWw==
+config:
+  aws:region: us-east-2
+  s3:bucket-name: turing-ai-data-dev-s3
+  s3:region: us-east-2
