@@ -37,6 +37,7 @@ variables:
 .python_setup: &python_setup
   - python3 -m venv .venv
   - source .venv/bin/activate
+  - pip install boto3
   - pip install --upgrade pip
   - pip install -r requirements.txt
 
@@ -76,6 +77,7 @@ install:s3:
   script:
     - python3 -m venv ${PROJECT_DIR}/.venv
     - source ${PROJECT_DIR}/.venv/bin/activate
+    - pip install boto3
     - pip install --upgrade pip
     - pip install -r requirements.txt
     - python -c "import pulumi; print('Pulumi version:', pulumi._version)"
@@ -98,6 +100,7 @@ unit_tests:s3:
     GIT_STRATEGY: clone
   script:
     - source ${PROJECT_DIR}/.venv/bin/activate
+    - pip install boto3
     - pip install pytest
     # Create tests directory if it doesn't exist
     - mkdir -p ${PROJECT_DIR}/tests
